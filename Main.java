@@ -40,8 +40,8 @@ public class Main {
         m1.add(m2).display();
         System.out.println("Multiplication m1*m2:");
         m1.multiply(m2).display();
-        System.out.println("Transposée m1:");
-        m1.transpose().display();
+        System.out.println("Transposée m2:");
+        m2.transpose().display();
         
         // Exercice 3: Tester addRow et addCol
         System.out.println("=== EXERCICE 3 ===");
