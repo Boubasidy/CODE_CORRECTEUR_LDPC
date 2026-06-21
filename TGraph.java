@@ -40,10 +40,13 @@ public class TGraph {
         this.right = new int[nc][maxColWeight + 1];
         
         // Initialiser les bits associés aux nœuds variables à 0
+            // Nœuds variables (colonnes)
         for (int i = 0; i < nc; i++) {
             right[i][0] = 0;
         }
-        
+        for (int i = 0; i < nr; i++) {
+            left[i][0] = 0;
+        }
         // Initialiser à -1 pour indiquer les positions non utilisées
         for (int i = 0; i < nr; i++) {
             for (int j = 1; j <= maxRowWeight; j++) {
@@ -113,11 +116,16 @@ public class TGraph {
         for (int iter = 0; iter < rounds; iter++) {
             // Étape 1: Calcul du syndrome s = H * x^T
             byte[] syndrome = new byte[nr];
+            // Pour chaque nœud fonctionnel, calculer le syndrome
             for (int i = 0; i < nr; i++) {
                 syndrome[i] = 0;
+                left[i][0] = 0; // Réinitialiser le compteur de bits associés
+                // Pour chaque voisin associé à ce nœud fonctionnel
                 for (int j = 1; j <= wr; j++) {
                     if (left[i][j] != -1) {
                         syndrome[i] = (byte) ((syndrome[i] + x[left[i][j]]) % 2);
+                        int idx_neighbor_variable = left[i][j];
+                        left[i][0] = (left[i][0] + right[idx_neighbor_variable][0]) % 2; // Compter les bits associés
                     }
                 }
             }
