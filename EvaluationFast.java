@@ -58,7 +58,12 @@ public class EvaluationFast {
         Matrix H = loadMatrix("data/matrix-2000-6000-5-15", nr, nc);
         long endLoad = System.currentTimeMillis();
         System.out.println("Matrice H (2000x6000) chargée en " + (endLoad - startLoad) + " ms");
-        
+        System.out.println("\n=== GÉNÉRATION DE LA MATRICE GÉNÉRATRICE ===");
+        startLoad = System.currentTimeMillis();
+        Matrix H_sys = H.sysTransform();  // Transformation systématique
+        Matrix G = H_sys.genG();           // Génération de matrice
+        endLoad = System.currentTimeMillis();
+        System.out.println("Matrice Generatrice créé en " + (endLoad - startLoad) + " ms");
         System.out.println("\n=== GÉNÉRATION DU GRAPHE DE TANNER ===");
         startLoad = System.currentTimeMillis();
         TGraph tgraph = new TGraph(H, 5, 15);  // wc=5, wr=15
@@ -80,26 +85,28 @@ public class EvaluationFast {
             int success = 0;
             int failure = 0;
             int wrongDecode = 0;
-            
-            long startEval = System.currentTimeMillis();
             Random rand = new Random();
+            Matrix u_tmp = new Matrix(1, k);
+            for (int i = 0; i < k; i++) {
+                u_tmp.setElem(0, i, (byte) (rand.nextInt(2)));  // Générer un mot source avec des 1 aux indices pairs
+            }
+            Matrix x = u_tmp.multiply(G);  // Encodage du mot source u_tmp pour obtenir
+            System.out.println("\nMot code x généré");
+            System.out.println("Premiers 20 bits de x:");
+            for (int i = 0; i < 20 && i < n; i++) {
+                System.out.print(x.getElem(0, i));
+            }
+            System.out.println("...");
+            long startEval = System.currentTimeMillis();
+
             
             for (int trial = 0; trial < numTrials; trial++) {
-                // Générer un mot aléatoire
-                Matrix x = new Matrix(1, n);
-                for (int i = 0; i < n; i++) {
-                    x.setElem(0, i, (byte) (rand.nextInt(2)));
-                }
-                
                 // Générer w erreurs
                 Matrix e = x.errGen(w);
-                
                 // Ajouter les erreurs
                 Matrix y = x.add(e);
                 
-                // Décoder
                 Matrix decoded = tgraph.decode(y, rounds);
-                
                 // Vérifier le résultat
                 if (decoded.getElem(0, 0) == -1) {
                     failure++;

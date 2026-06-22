@@ -55,13 +55,8 @@ public class Evaluation {
         long endLoad = System.currentTimeMillis();
         System.out.println("Matrice H chargée en " + (endLoad - startLoad) + " ms");
         
-        System.out.println("Nous aimerions effectuer sysTransform(), mais c'est très coûteux...");
-        System.out.println("Pour cette évaluation, nous allons utiliser H directement.");
-        System.out.println("Cela suppose que H_orig est déjà de forme systématique ou nous l'on adapté.");
-        
-        // On utilisera H directement pour genG - mais en général ce n'est pas systématique
-        // On va plutôt tester directement sans appliquer sysTransform
-        
+        Matrix H_sys = H.sysTransform();  // Transformation systématique
+        Matrix G = H_sys.genG();           // Génération de matrice 
         // Générer un mot u avec des 1 aux indices pairs et des 0 sinon
         Matrix u = new Matrix(1, k);
         for (int i = 0; i < k; i++) {
@@ -109,26 +104,25 @@ public class Evaluation {
             int success = 0;
             int failure = 0;
             int wrongDecode = 0;
-            
+
+            Matrix u_tmp = new Matrix(1, k);
+            Random rand = new Random();
+            for (int i = 0; i < k; i++) {
+                u_tmp.setElem(0, i, (byte) (rand.nextInt(2)));
+            }
+            Matrix x = u_tmp.multiply(G);  // Encodage du mot source u_tmp pour obtenir
+            System.out.println("\nMot code x généré");
+            System.out.println("Premiers 20 bits de x:");
+            for (int i = 0; i < 20 && i < n; i++) {
+                System.out.print(x.getElem(0, i));
+            }
+            System.out.println("...");
             long startEval = System.currentTimeMillis();
             for (int trial = 0; trial < numTrials; trial++) {
                 if (trial % 1000 == 0) {
                     System.out.println("  Progression: " + trial + "/" + numTrials);
                 }
                 
-                // Générer un mot de code aléatoire (simple: tirer au hasard)
-                // Dans la pratique, on devrait encoder un mot source
-                Matrix x = new Matrix(1, n);
-                Random rand = new Random();
-                for (int i = 0; i < k; i++) {
-                    x.setElem(0, i, (byte) (rand.nextInt(2)));
-                }
-                // Les bits de contrôle seraient calculés...pour simplifier on les met à 0
-                for (int i = k; i < n; i++) {
-                    x.setElem(0, i, (byte) 0);
-                }
-                
-                // Générer w erreurs
                 Matrix e = x.errGen(w);
                 
                 // Ajouter les erreurs

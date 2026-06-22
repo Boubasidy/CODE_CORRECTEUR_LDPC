@@ -114,18 +114,17 @@ public class TGraph {
         
         // Itérations de l'algorithme du renversement de bits
         for (int iter = 0; iter < rounds; iter++) {
+            for (int i = 0; i < nc; i++) {
+                right[i][0] = x[i]; // Mettre à jour les bits associés aux nœuds variables
+            }
+            
             // Étape 1: Calcul du syndrome s = H * x^T
-            byte[] syndrome = new byte[nr];
-            // Pour chaque nœud fonctionnel, calculer le syndrome
             for (int i = 0; i < nr; i++) {
-                syndrome[i] = 0;
                 left[i][0] = 0; // Réinitialiser le compteur de bits associés
-                // Pour chaque voisin associé à ce nœud fonctionnel
                 for (int j = 1; j <= wr; j++) {
                     if (left[i][j] != -1) {
-                        syndrome[i] = (byte) ((syndrome[i] + x[left[i][j]]) % 2);
                         int idx_neighbor_variable = left[i][j];
-                        left[i][0] = (left[i][0] + right[idx_neighbor_variable][0]) % 2; // Compter les bits associés
+                        left[i][0] = (left[i][0] + right[idx_neighbor_variable][0]) % 2; 
                     }
                 }
             }
@@ -133,14 +132,13 @@ public class TGraph {
             // Vérifier si le syndrome est nul (décodage réussi)
             boolean success = true;
             for (int i = 0; i < nr; i++) {
-                if (syndrome[i] != 0) {
+                if (left[i][0] != 0) {
                     success = false;
                     break;
                 }
             }
             
             if (success) {
-                // Le décodage a réussi
                 Matrix result = new Matrix(1, nc);
                 for (int i = 0; i < nc; i++) {
                     result.setElem(0, i, x[i]);
@@ -154,10 +152,8 @@ public class TGraph {
                 score[j] = 0;
             }
             
-            // Pour chaque nœud de contrôle avec syndrome non nul
             for (int i = 0; i < nr; i++) {
-                if (syndrome[i] == 1) {
-                    // Incrémenter le score de tous les bits associés à ce nœud
+                if (left[i][0] == 1) {
                     for (int j = 1; j <= wr; j++) {
                         if (left[i][j] != -1) {
                             score[left[i][j]]++;
@@ -166,18 +162,25 @@ public class TGraph {
                 }
             }
             
-            // Étape 3: Trouver et renverser le bit avec le score maximal
-            int maxScore = -1;
-            int maxIdx = -1;
+            // Étape 3:
+            int maxScore = 0;
             for (int j = 0; j < nc; j++) {
                 if (score[j] > maxScore) {
                     maxScore = score[j];
-                    maxIdx = j;
                 }
             }
             
-            if (maxIdx >= 0 && maxScore > 0) {
-                x[maxIdx] = (byte) (1 - x[maxIdx]);
+            // Renverser TOUS les bits qui possèdent ce score maximal
+            if (maxScore > 0) {
+                for (int j = 0; j < nc; j++) {
+                    if (score[j] == maxScore) {
+                        x[j] = (byte) (1 - x[j]);
+                    }
+                }
+            } else {
+                // Si le maxScore est 0 mais qu'on n'a pas validé le "success", 
+                // on est bloqué (les erreurs ne déclenchent plus de syndromes). On arrête.
+                break; 
             }
         }
         

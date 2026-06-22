@@ -45,7 +45,16 @@ public class Matrix {
                     return false;
                 return true;
     }
-    
+    public int DistanceH(Matrix m){
+        if ((rows != m.rows) || (cols != m.cols))
+            return -1;
+        int total=0;
+        for (int i = 0; i < rows; i++) 
+            for (int j = 0; j < cols; j++) 
+                if (data[i][j] != m.data[i][j])
+                    total++;
+                return total;
+    }
     public void shiftRow(int a, int b){
         byte tmp = 0;
         for (int i = 0; i < cols; i++){
@@ -145,7 +154,12 @@ public class Matrix {
     }
     
     public Matrix sysTransform() {
-        Matrix H = this;
+        Matrix H = new Matrix(this.rows, this.cols);
+        for (int i = 0; i < this.rows; i++) {
+            for (int j = 0; j < this.cols; j++) {
+                H.data[i][j] = this.data[i][j];
+            }
+        }
         int r = H.rows;
         int c = H.cols;
         
